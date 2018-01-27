@@ -1,0 +1,25 @@
+Ganti waktu kunjung jadi 45 menit per objek wisata?
+TODO : Ganti datanya v
+vTODO : Bikin dia biar  bisa berjalan bergenerasi v
+TODO : Kadang solusinya terbatas, terus dia buat ulang2 gimana dong???
+TODO : Ganti verifikasi digit dinamis
+TODO : Tambahin waktu
+vTODO : Pastiin yg bali utara dan selatan -> gantinya jadi radius v
+
+
+Yang diubah :
+Durasi kunjungan jadi 45menit
+User bisa pilih jumlah objek wisata dikunjungi 
+PR:
+Nempelin jam
+Biner digitnya bisa terserah (mis: ditambah jadi 16 berarti jadi 6 digit biner)
+Memastikan kenapa fitness function cuma boleh koma
+
+
+Masalah lama di crossover 
+Kalo dibawah 
+140km
+radius 65km
+
+LAMPIRAN :
+- Data objek wisata

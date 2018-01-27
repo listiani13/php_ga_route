@@ -1,6 +1,5 @@
 <?php
 require_once('Database.php');
-// ini_set('memory_limit', '2G');
 	/**
 	* 
 	*/
@@ -33,7 +32,7 @@ require_once('Database.php');
 		}
 		public function getDistance($cities)
 		{
-			$json_jarak = file_get_contents("json_jarak.json");
+			$json_jarak = file_get_contents("file:///D:/json_jarak.json");
 			$json_jarak = json_decode($json_jarak,true);
 			$total_jarak = 0;
 			$ukuran		= sizeof($cities);
@@ -47,17 +46,9 @@ require_once('Database.php');
 			}
 			return $total_jarak;
 		}
-		public function selectCityNearNgurahRai()
-		{
-			$json_jarak = file_get_contents("json_jarak.js");
-			$json_jarak = json_decode($json_jarak, true);
-			foreach ($json_jarak["c0"] as $line) {
-				
-			}
-		}
 		public function verifikasi($num)
 		{
-			$json_jarak = file_get_contents("json_jarak.json");
+			$json_jarak = file_get_contents("file:///D:/json_jarak.json");
 			$json_jarak = json_decode($json_jarak,true);
 			$total_jarak = 0;
 			if (!isset($json_jarak["c$num"])) {

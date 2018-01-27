@@ -6,7 +6,7 @@
 	*/
 	class Individu
 	{
-		function __construct($time,$cities_amount, $objek_wisata, $digit)
+		function __construct($time,$cities_amount, $objek_wisata)
 		{
 			// define('API_KEY', 'AIzaSyBTE9O-ina1ZgUJgu9P4kN66etZyjErqYw');
 			// $this->chrom_length = mt_rand(1,$time-1);
@@ -17,7 +17,7 @@
 			$this->objek_wisata = $objek_wisata;
 			$this->waktu_kunjung = 60;
 			$this->utils = new Utils();
-			$this->digit = $digit;
+			$this->digit = 4;
 		}
 		/**
 		 * generateChrom builds the chromosomes
@@ -26,12 +26,11 @@
 		public function generateChrom()
 		{
 			static $recursion_depth = 0;
-			$chrom_binary = [];
+			// $chrom_binary = [];
 			$chrom_int = [];
-			$chrom_details = [];
-			$time = $this->utils->dectobin($this->time, $this->digit);
+			// $chrom_details = [];
 			$origin_binary = $this->utils->dectobin($this->id_origin, $this->digit);
-			$chrom_binary = array_merge($chrom_binary,$time, $origin_binary);
+			// $chrom_binary = array_merge($chrom_binary, $origin_binary);
 			array_push($chrom_int, $this->id_origin);
 			// $last_index_objek = sizeof($this->objek_wisata)-1;
 			for ($i=0; $i < $this->chrom_length; $i++) { 
@@ -39,19 +38,20 @@
 				$index_randomized_city 	= array_rand($this->objek_wisata);
 				$randomized_city 		= $this->checkIfSame($chrom_int,$this->objek_wisata[$index_randomized_city],$this->objek_wisata);
 				array_push($chrom_int, $randomized_city);
-				$chrom_binary = array_merge($chrom_binary, $this->utils->dectobin($randomized_city, $this->digit));
+				// $chrom_binary = array_merge($chrom_binary, $this->utils->dectobin($randomized_city, $this->digit));
 			}
 			array_push($chrom_int, $this->id_origin);
-			$chrom_binary = array_merge($chrom_binary, $origin_binary);
+			// $chrom_binary = array_merge($chrom_binary, $origin_binary);
 			$fitness = $this->generateFitnessFunction($chrom_int);
 			if ($fitness !== FALSE) {
 				# Jika lulus verifikasi fitness
-				array_push($chrom_binary, $fitness);
+				array_push($chrom_int, $fitness);
 			}
 			else{
 				$recursion_depth ++;
 				if ($recursion_depth < 7000) {
-					$chrom_binary = $this->generateChrom();
+					$chrom_int = $this->generateChrom();
+					// $chrom_binary = $this->generateChrom();
 				}
 				else
 				{
@@ -59,7 +59,7 @@
 					return false;
 				}
 			}
-			return $chrom_binary;
+			return $chrom_int;
 		}
 		public function generateChromDetails()
 		{

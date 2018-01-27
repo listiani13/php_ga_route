@@ -1,0 +1,11 @@
+=
+1. Crossover harus ambil 2 parent dengan panjang yang sama?
+2. Hasil setelah crossover ditimpa ke yang lama? 
+Atau dicek dulu apabila fitnessnya lebih tinggi baru ditimpa, kalo fitnessnya lebih kecil dikeep yang lama, hasil crossover dibuang?
+3. Begitu juga dengan mutasi
+4. seleksi dilakukan setelah hitung fitness atau diakhir?
+
+TODO :
+kerjain TODO di Individu.php dan Generasi.php
+perbaiki laporan!
+cari tau cara bikin supaya efisien distance matrixnya
