@@ -14,7 +14,7 @@
 			define('MUTATION_RATE', 0.04);
 			define('CROSSOVER_RATE', 0.5);
 			// Belum termasuk jam
-			$this->digit = 4;
+			$this->digit = 5;
 			define('BATAS_AWAL', $this->digit * 2 -1);
 			$this->utils = new Utils();
 			$this->population = $pops;
@@ -36,31 +36,33 @@
 		{
 			$first_pop = '';
 			for ($i=0; $i < $counter; $i++) { 
-				$first_pop = $this->runGA($first_pop);
+				try {
+					$first_pop = $this->runGA($first_pop);
+				}
+				catch (Exception $e) {
+					echo $e->getMessage();
+					break;
+				}
 			}
-			echo "<br> Optimal Solution: <br>";
-			var_dump($first_pop);
-			$arr_sel_pop = array_slice($first_pop, 0, -1);
-			// $a = sizeof($arr_sel_pop)-1;
-			$b = sizeof($arr_sel_pop);
-			$chrom_int = [];
-			$i = 0;
-			// for ($i=0; $i < $b; $i+4) { 
-			// 	$binary_array = array_slice($first_pop, $i, 4);
-			// 	$dec = $this->utils->bintodec($binary_array);
-			// 	array_push($chrom_int, $dec);
-			// 	$i+=4;
-			// }
-			while ($i < $b) {
-				// $utils = new Utils();
-				$binary_array = array_slice($first_pop, $i, $this->digit);
-				$dec = $this->utils->bintodec($binary_array);
-				array_push($chrom_int, $dec);
-				$i+=4;
+			if ($first_pop != null || $first_pop != '') {
+				echo "<br> Optimal Solution: <br>";
+				var_dump($first_pop);
+				$arr_sel_pop = array_slice($first_pop, 0, -1);
+				// $a = sizeof($arr_sel_pop)-1;
+				$b = sizeof($arr_sel_pop);
+				$chrom_int = [];
+				$i = 0;
+				while ($i < $b) {
+					$binary_array = array_slice($first_pop, $i, $this->digit);
+					$dec = $this->utils->bintodec($binary_array);
+					array_push($chrom_int, $dec);
+					$i+=$this->digit;
+				}
+				$json_final = [];
+				array_push($json_final, ["destinasi" =>  $chrom_int], ["total_minutes" => 1/end($first_pop) ]);
+				echo json_encode($json_final);
 			}
-			$json_final = [];
-			array_push($json_final, ["destinasi" =>  $chrom_int], ["total_minutes" => 1/end($first_pop) ]);
-			echo json_encode($json_final);
+			
 		}
 		
 		public function runGA($first_pop)
@@ -90,13 +92,14 @@
 
 				// ###################################################################
 				// Mutasi
-				echo "<br><br>Mutation<br>=================================<br><br>";
+				echo "Mutation<br>=================================<br><br>";
 				$population = $this->mutation($population);
 				// echo $this->my_print_r2($population);
 
-				// // Seleksi Alam
-				// echo "<br><br>Seleksi Alam dan yang terpilih jeng jeng<br>=================================<br><br>";
-				// $selected_pops = $population[$this->selection($population)];
+				// Seleksi Alam
+				echo "Seleksi Alam dan yang terpilih jeng jeng<br>=================================<br><br>";
+				$selected_pops = $population[$this->selection($population)];
+				return $selected_pops;
 				// echo $this->my_print_r2($selected_pops);
 				// $fit = 1/end($selected_pops);
 				// $waktu_kunjung = $this->cities_visited * 45;
@@ -128,10 +131,11 @@
 				// $json_final = [];
 				// array_push($json_final, ["destinasi" =>  $chrom_int], ["total_minutes" => 1/end($selected_pops) ]);
 				// echo json_encode($json_final);
-				// return $selected_pops;
+				
 				return $population[0];
 			} catch (Exception $e) {
-				echo 'Caught exception: ',  $e->getMessage(), "\n";
+				throw new Exception('Tidak ditemukan solusi');
+				// echo 'Caught exception: ',  $e->getMessage(), "\n";
 			}
 			
 		}
@@ -257,7 +261,7 @@
 				// DONE : itung fitness setelah dia berubah
 				$verifikasi = $this->verifikasiBin($pops_mutated);
 				if (!$verifikasi) {
-					echo "Lolos verifikasi hasil mutasinya! Alhamdulilah ya ukhti<br>";
+					echo "Lolos verifikasi hasil mutasinya! Alhamdulilah ya ukhti<br><br>";
 					$pops_mutated = $this->generateNewFitness($pops_mutated);
 				}else{
 					echo "Tidak Lolos verifikasi hasil mutasinya!  Tapi ndapapa ada yang baru<br>";
@@ -348,11 +352,11 @@
 			$b = sizeof($chromosom);
 			while ($i < $b) {
 				if ($i!=$a) {
-					$binary_array = array_slice($chromosom, $i, 4);
+					$binary_array = array_slice($chromosom, $i, $this->digit);
 					$dec = $utils->bintodec($binary_array);
 					array_push($chrom_int, $dec);
 				}
-				$i+=4;
+				$i+=$this->digit;
 			}
 			$distance = $utils->getDistance($chrom_int);
 			$total_distance = sprintf("%.1f",$distance);
@@ -375,13 +379,14 @@
 			while ($i < $b) {
 				// cek dimana $i bukan di posisi array yg fitness dan bukan di posisi origin dan destinasi akhir
 				if ($i!=$a && $i>BATAS_AWAL) {
-					$binary_array = array_slice($chromosom, $i, 4);
+					$binary_array = array_slice($chromosom, $i, $this->digit);
 					$dec = $this->utils->bintodec($binary_array);
 					// check apakah dia ga di index = 0 dan ga batas akhir
 					if ($i!=0&&$i!==$batas_akhir&& $i > BATAS_AWAL) {
+						// jika dia = 1 atau dia = 0
 						if ($dec==1 || $dec == 0) {
-							// jika dia = 1 atau dia = 0
 							$failed_index = $failed_index_counter;
+							break;
 						}
 						// check ada kota yang sama
 						$same_dest_index = $this->utils-> checkIfCitySame($ar_int,$dec);
@@ -392,7 +397,6 @@
 							break;
 						}
 						array_push($ar_int, $dec);
-						// var_dump($ar_int);
 						if (!$this->utils->verifikasi($dec)&&$dec!=0) {
 							$failed_index = $failed_index_counter;
 							echo "<br>Tidak ditemukan objek wisata ke- $failed_index_counter - ($dec)<br>";
@@ -405,16 +409,16 @@
 				$i+=$this->digit;
 			}
 			$new_chromosom = $chromosom;
-			// echo "failed index: $failed_index";
+			
 			// kota pertama digit 5 : ganti dari 10-14 $failed_index = 0
 			// kota kedua digit 4: ganti dari 12-15 1
 			// 5(digit)*(2+0 (failed index))
+
 			// fixing broken chromosome
 			if (isset($failed_index)) {
 				echo "Ditemukan failed binary pada destinasi ke-($failed_index), melakukan penggantian sparepart<br>------------------";
-				echo "<br>failed index: $failed_index<br>";
-				// kalo tanpa jam
-				// BARU SAMPE SINI 
+				// // kalo tanpa jam
+				// // BARU SAMPE SINI 
 				$failed_index = $this->digit*($failed_index+2);
 				$failed_index_end = $failed_index+$this->digit;
 				echo "failed_index = $failed_index<br>1) Generate destinasi baru<br>";
@@ -436,6 +440,11 @@
 				}
 				echo $this->my_print_r2($chromosom);
 				echo "<br>3) Yayy! Brand new kromosom, hopefully sudah benar yak!<br>";
+				// check again before passing it
+				$newChromosom = $this->verifikasiBin($chromosom);
+				if ($newChromosom) {
+					$chromosom = $newChromosom;
+				}
 				echo $this->my_print_r2($chromosom);
 				return $chromosom;
 			}
@@ -486,14 +495,14 @@
 		}
 	}
 	$berapa_populasi = 50;
-	$waktu = 5;
-	$yang_mau_dikunjungi = 3;
+	$waktu = 11;
+	$yang_mau_dikunjungi = 2;
 	$generasi = new Generasi($berapa_populasi,$waktu,$yang_mau_dikunjungi);
 	$start = microtime(true);
 	echo "<pre>"; 
 	// maks cuma bisa 15, kalo >15 ga kuat komp nya
-	// print_r($generasi->runGAAll(50));
-	print_r($generasi->verifikasiBin(["0","1","0","1","0","0","0","1","0","0","0","1","0","0","0","1","0.0050543341"]));
+	print_r($generasi->runGAAll(50));
+	// print_r($generasi->verifikasiBin(["0","0","1","0","1","0","0","0","0","1","0","0","0","0","1","0","0","0","0","1","0.0050543341"]));
 	echo "</pre>";
 	$time_elapsed_secs = microtime(true) - $start;
 	echo "<br>Exec Time ".$time_elapsed_secs;
