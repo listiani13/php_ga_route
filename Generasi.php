@@ -42,7 +42,7 @@
 					$first_pop = $this->runGA($first_pop);
 				}
 				catch (Exception $e) {
-					echo $e->getMessage();
+					echo $e->getMessage()."<br>";
 					break;
 				}
 			}
@@ -64,7 +64,7 @@
 				}
 				$json_final = [];
 				array_push($json_final, 
-					["availability_time" => $this->time], ["destinasi" =>  $chrom_int], ["total_minutes" => 1/end($first_pop) ]);
+					["availability_time" => $this->time], ["destinasi" =>  $chrom_int], ["total_travel_minutes" => 1/end($first_pop) ]);
 				echo json_encode($json_final);
 			}
 			
@@ -136,8 +136,7 @@
 				// $json_final = [];
 				// array_push($json_final, ["destinasi" =>  $chrom_int], ["total_minutes" => 1/end($selected_pops) ]);
 				// echo json_encode($json_final);
-				
-				return $population[0];
+				// return $population[0];
 			} catch (Exception $e) {
 				throw new Exception('Tidak ditemukan solusi');
 				// echo 'Caught exception: ',  $e->getMessage(), "\n";
@@ -148,13 +147,6 @@
 		function generatePops($first_pop)
 		{
 			$database = new Database();
-			// jika waktu ketersediaan kurang dari 6 jam
-			// if ($this->time <= 6) {
-			// 	$objek_wisata = $database->selectObjekBaliSelatan();
-			// }
-			// else{
-			// 	$objek_wisata = $database->selectObjekWisataAreaA();
-			// }
 			$kromosom = new Individu($this->time,$this->cities_visited,$this->objek_wisata, $this->digit);
 			$population = [];
 			if ($first_pop!== '') {
@@ -182,26 +174,17 @@
 		{
 			$available_to_xo = CROSSOVER_RATE*$this->population;
 			// DEBUG
-			// $available_to_xo = 2;
 			// echo "Jumlah Kromosom yang di XOR :".$available_to_xo."<br><br>";
 			for ($i=0; $i < $available_to_xo; $i+=2) { 
-				$rand_index_1 = mt_rand(1,($this->population-1));
-				$rand_index_2 = mt_rand(1,($this->population-1));
-				// $rand_index_1 = mt_rand(0,1);
-				// $rand_index_2 = mt_rand(0,1);
+				// $rand_index_1 = mt_rand(1,($this->population-1));
+				$rand_index_1 = $this->selection($population);
+				$rand_index_2 = $this->selection($population);
+				// $rand_index_2 = mt_rand(1,($this->population-1));
 				while ($rand_index_1 === $rand_index_2) {
-					// $rand_index_2 = mt_rand(0,1);
 					$rand_index_2 = mt_rand(1,($this->population-1));
 				}
-
-				// echo "Indeks Yang Terpilih : $rand_index_1 dan $rand_index_2 <br>";
 				$offsprings = $this->crossoverPM($population[$rand_index_1],$population[$rand_index_2]);
-				// $population[$rand_index_1] = $offsprings[0];
-				// $population[$rand_index_2] = $offsprings[1];
 			}
-			// foreach ($offsprings as $line) {
-				
-			// }
 			return $population;
 		}
 
@@ -210,16 +193,8 @@
 			// DONE 1: Kerjain Crossovernya = sekarang pake parent yg random
 			// echo "Chrom Parent 1:".$this->my_print_r2($chrom_parent1)."<br>Chrom Parent 2:".$this->my_print_r2($chrom_parent2)."<br>";
 			$length_chrom1 = sizeof($chrom_parent1);
-			// $length_chrom2 = sizeof($chrom_parent2);
-			// if ($length_chrom1 > $length_chrom2) {
-			// 	$end = $length_chrom2-6;
-			// 	$parent_selected = $chrom_parent2;
-			// }
-			// else{
-			// 	$end = $length_chrom1-6;
-			// 	$parent_selected = $chrom_parent1;
-			// }
-			// -1 fitness, -1 index yang length kan dia dimulai dari 0 bukan 1, sedangkan sizeof itu ngitungnya dr 1
+			## -1 fitness, -1 index yang length kan dia dimulai dari 0 bukan 1, sedangkan sizeof itu ngitungnya dr 1
+
 			$end = $length_chrom1 - $this->digit - 2;
 			$r1 = mt_rand(BATAS_AWAL,$end);
 			$r2 = mt_rand(BATAS_AWAL,$end);
@@ -271,17 +246,13 @@
 		function mutation($population)
 		{
 			$available_to_mutate = MUTATION_RATE*$this->population;
-			// for development purpose ! << DELETED SOON >>
-			// if ($available_to_mutate < 1) {
-			// 	$available_to_mutate = 1;
-			// }
 			for ($i=0; $i < $available_to_mutate; $i++) { 
 				// DEBUG
-				// $random_pops_index = mt_rand(1,($this->population-1));
-				$random_pops_index = array_rand($population);
+				// $random_pops_index = array_rand($population);
 				// echo "Populasi ke-$random_pops_index before : <br>";
 				// echo $this->my_print_r2($population[$random_pops_index]);
 				// echo "Population that has been mutated : <br>";
+				$random_pops_index = $this->selection($population);
 				$pops_mutated = $this->mutationSwap($population[$random_pops_index]);
 				// DONE : itung fitness setelah dia berubah
 				$verifikasi = $this->verifikasiBin($pops_mutated);
@@ -298,9 +269,10 @@
 				// Timpa populasi lama dengan yang dimutasi
 				$population[$random_pops_index] = $pops_mutated;
 			}
+			
 			return $population;
 		}
-		function selection($population)
+		function selection(&$population)
 		{
 			$fitness_collection = [];
 			foreach ($population as $line) {
@@ -308,9 +280,6 @@
 			}
 			$selected_index = $this->selectionRW($fitness_collection);
 			return $selected_index;
-			// echo "<br> selected_index : $selected_index";
-			// echo "<br> isinya : ";
-			// echo $this->my_print_r2($population[$selected_index]);
 		}
 
 		/* GA Operators */
@@ -361,23 +330,26 @@
 				$i++;
 			}
 		}
-		
+	
 		
 //====================== UTILS =============================\\
 		function generateNewFitness($chromosom)
 		{
-			// var_dump($chromosom);
+			// echo "sebelum <br>";
+			// echo $this->my_print_r2($chromosom);
 			$last_index = sizeof($chromosom)-1;
 			$utils = new Utils();
 			$binary = "";
 			$waypoints = "";
 			$chrom_int = [];
-			$i = 0;
+			$i = $this->digit;
 			$a = sizeof($chromosom)-1;
 			$b = sizeof($chromosom);
 			while ($i < $b) {
 				if ($i!=$a) {
+					// echo "i = $i";
 					$binary_array = array_slice($chromosom, $i, $this->digit);
+					// var_dump($binary_array);
 					$dec = $utils->bintodec($binary_array);
 					array_push($chrom_int, $dec);
 				}
@@ -494,11 +466,6 @@
 		function random_float ($min,$max) {
 			return ($min + lcg_value()*(abs($max - $min)));
 		}
-		
-		public function uji()
-		{
-			var_dump($this->verifikasiBin(["0","0","0","1","0","0","0","1","1","0","1","1","0","0","0","1","0.0081400081"]));
-		}
 		function my_print_r2 ($x) {
 		  return json_encode($x)."<br>";
 		}
@@ -522,8 +489,8 @@
 		}
 	}
 	$berapa_populasi = 50;
-	$waktu = 11;
-	$yang_mau_dikunjungi = 4;
+	$waktu = 10;
+	$yang_mau_dikunjungi = 3;
 	$generasi = new Generasi($berapa_populasi,$waktu,$yang_mau_dikunjungi);
 	$start = microtime(true);
 	$chrom_parent1 = ["0","1","0","1","1","0","0","0","0","1","0","0","1","0","0","0","1","0","0","0","0","0","0","0","1","0.0047996160"];
@@ -534,7 +501,7 @@
 	print_r($generasi->runGAAll(50));
 	// include 'population_test.php';
 	// print_r($generasi->crossover($population));
-	// print_r($generasi->verifikasiBin(["0","0","1","0","1","0","0","0","0","1","0","0","0","0","1","0","0","0","0","1","0.0050543341"]));
+	// print_r($generasi->mutation(["1","1","0","0","0","0","0","1","0","0","1","1","0","1","1","1","1","0","0","0","1","0","1","0","0","0","0","1","0.0034596091"]));
 	echo "</pre>";
 	$time_elapsed_secs = microtime(true) - $start;
 	echo "<br>Exec Time ".$time_elapsed_secs;
