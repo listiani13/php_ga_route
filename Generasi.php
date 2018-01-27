@@ -25,18 +25,20 @@
 			$this->database = new Database();
 			// TODO: Benerin ini biar objek wisatanya pake radius
 			if ($this->time <= 6) {
-				$this->objek_wisata = $this->database->selectObjekBaliSelatan();
+				$this->objek_wisata = $this->database->selectObjekWisataAreaA();
 			}
 			else {
-				$this->objek_wisata = $this->database->selectObjekBaliUtara();
+				$this->objek_wisata = $this->database->selectObjekWisataAll();
 			}
 		}
 
 		public function runGAAll($counter)
 		{
 			$first_pop = '';
-			for ($i=0; $i < $counter; $i++) { 
+			for ($i=1; $i <= $counter; $i++) { 
 				try {
+					echo "Generasi ke- $i<br>"
+					."****************************************************************************<br>";
 					$first_pop = $this->runGA($first_pop);
 				}
 				catch (Exception $e) {
@@ -144,13 +146,13 @@
 		{
 			$database = new Database();
 			// jika waktu ketersediaan kurang dari 6 jam
-			if ($this->time <= 6) {
-				$objek_wisata = $database->selectObjekBaliSelatan();
-			}
-			else{
-				$objek_wisata = $database->selectObjekBaliUtara();
-			}
-			$kromosom = new Individu($this->time,$this->cities_visited,$objek_wisata, $this->digit);
+			// if ($this->time <= 6) {
+			// 	$objek_wisata = $database->selectObjekBaliSelatan();
+			// }
+			// else{
+			// 	$objek_wisata = $database->selectObjekWisataAreaA();
+			// }
+			$kromosom = new Individu($this->time,$this->cities_visited,$this->objek_wisata, $this->digit);
 			$population = [];
 			if ($first_pop!== '') {
 				$population[0] = $first_pop;
@@ -254,19 +256,19 @@
 				// DEBUG
 				// $random_pops_index = mt_rand(1,($this->population-1));
 				$random_pops_index = array_rand($population);
-				echo "Populasi ke-$random_pops_index before : <br>";
-				echo $this->my_print_r2($population[$random_pops_index]);
-				echo "Population that has been mutated : <br>";
+				// echo "Populasi ke-$random_pops_index before : <br>";
+				// echo $this->my_print_r2($population[$random_pops_index]);
+				// echo "Population that has been mutated : <br>";
 				$pops_mutated = $this->mutationSwap($population[$random_pops_index]);
 				// DONE : itung fitness setelah dia berubah
 				$verifikasi = $this->verifikasiBin($pops_mutated);
 				if (!$verifikasi) {
-					echo "Lolos verifikasi hasil mutasinya! Alhamdulilah ya ukhti<br><br>";
+					// echo "Lolos verifikasi hasil mutasinya! Alhamdulilah ya ukhti<br><br>";
 					$pops_mutated = $this->generateNewFitness($pops_mutated);
 				}else{
-					echo "Tidak Lolos verifikasi hasil mutasinya!  Tapi ndapapa ada yang baru<br>";
-					echo "Individu baru: <br>";
-					var_dump($verifikasi);
+					// echo "Tidak Lolos verifikasi hasil mutasinya!  Tapi ndapapa ada yang baru<br>";
+					// echo "Individu baru: <br>";
+					// var_dump($verifikasi);
 					$pops_mutated = $this->generateNewFitness($verifikasi);
 				}
 				
@@ -283,7 +285,7 @@
 			}
 			$selected_index = $this->selectionRW($fitness_collection);
 			return $selected_index;
-			echo "<br> selected_index : $selected_index";
+			// echo "<br> selected_index : $selected_index";
 			// echo "<br> isinya : ";
 			// echo $this->my_print_r2($population[$selected_index]);
 		}
@@ -304,7 +306,7 @@
 			while ($r1 == $r2) {
 				$r2 = mt_rand($start,$end);
 			}
-			echo "Tuker $r1 dengan $r2<br>";
+			// echo "Tuker $r1 dengan $r2<br>";
 			$temp = $chrom[$r1];
 			$chrom[$r1]=$chrom[$r2];
 			$chrom[$r2]=$temp;
@@ -367,8 +369,8 @@
 		}
 		public function verifikasiBin($chromosom)
 		{
-			echo "Dilakukan proses verifikasi pada kromosom berikut ini<br>------------------<br>";
-			echo $this->my_print_r2($chromosom);
+			// echo "Dilakukan proses verifikasi pada kromosom berikut ini<br>------------------<br>";
+			// echo $this->my_print_r2($chromosom);
 			$i = 0;
 			$a = sizeof($chromosom)-1;
 			$b = sizeof($chromosom);
@@ -391,16 +393,16 @@
 						// check ada kota yang sama
 						$same_dest_index = $this->utils-> checkIfCitySame($ar_int,$dec);
 						if ($same_dest_index!== false) {
-							echo "<br>Kota ke - $same_dest_index double <br>";
+							// echo "<br>Kota ke - $same_dest_index double <br>";
 							$failed_index = $same_dest_index;
-							echo $this->my_print_r2($ar_int);
+							// echo $this->my_print_r2($ar_int);
 							break;
 						}
 						array_push($ar_int, $dec);
 						if (!$this->utils->verifikasi($dec)&&$dec!=0) {
 							$failed_index = $failed_index_counter;
-							echo "<br>Tidak ditemukan objek wisata ke- $failed_index_counter - ($dec)<br>";
-							echo $this->my_print_r2($chromosom);
+							// echo "<br>Tidak ditemukan objek wisata ke- $failed_index_counter - ($dec)<br>";
+							// echo $this->my_print_r2($chromosom);
 							break;
 						}
 						$failed_index_counter ++;
@@ -416,36 +418,36 @@
 
 			// fixing broken chromosome
 			if (isset($failed_index)) {
-				echo "Ditemukan failed binary pada destinasi ke-($failed_index), melakukan penggantian sparepart<br>------------------";
+				// echo "Ditemukan failed binary pada destinasi ke-($failed_index), melakukan penggantian sparepart<br>------------------";
 				// // kalo tanpa jam
 				// // BARU SAMPE SINI 
 				$failed_index = $this->digit*($failed_index+2);
 				$failed_index_end = $failed_index+$this->digit;
-				echo "failed_index = $failed_index<br>1) Generate destinasi baru<br>";
+				// echo "1) Generate destinasi baru<br>";
 				// $last_index_objek = sizeof($this->objek_wisata)-1;
 				// $index_randomized_city = mt_rand(0,$last_index_objek);
 				$index_randomized_city 	= array_rand($this->objek_wisata);
 				$city_check = $this->notZeroOrOne($this->objek_wisata[$index_randomized_city]);
 				$randomized_city = $this->checkIfSame($ar_int,$city_check,$this->objek_wisata);
-				echo "- Destinasi Baru = $randomized_city<br>";
+				// echo "- Destinasi Baru = $randomized_city<br>";
 				$new_city_binary = $this->utils->dectobin($randomized_city, $this->digit);
 				$new_city_binary_index = 0;
-				echo "Binary Destinasi<br>";
-				var_dump($new_city_binary);
-				echo "<br>2) Ganti binary tik tok<br>";
+				// echo "Binary Destinasi<br>";
+				// var_dump($new_city_binary);
+				// echo "<br>2) Ganti binary tik tok<br>";
 				while ($failed_index < $failed_index_end) {
 					$chromosom[$failed_index] = $new_city_binary[$new_city_binary_index];
 					$failed_index ++;
 					$new_city_binary_index ++;
 				}
-				echo $this->my_print_r2($chromosom);
-				echo "<br>3) Yayy! Brand new kromosom, hopefully sudah benar yak!<br>";
+				// echo $this->my_print_r2($chromosom);
+				// echo "<br>3) Yayy! Brand new kromosom, hopefully sudah benar yak!<br>";
 				// check again before passing it
 				$newChromosom = $this->verifikasiBin($chromosom);
 				if ($newChromosom) {
 					$chromosom = $newChromosom;
 				}
-				echo $this->my_print_r2($chromosom);
+				// echo $this->my_print_r2($chromosom);
 				return $chromosom;
 			}
 			// var_dump($chromosom);
