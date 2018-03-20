@@ -6,7 +6,8 @@
 	*/
 	class Individu
 	{
-		function __construct($time,$cities_amount, $objek_wisata, $digit)
+		// TODO: Get real distance from first obj if it's not null
+		function __construct($time,$cities_amount, $objek_wisata, $digit, $first_obj)
 		{
 			// define('API_KEY', 'AIzaSyBTE9O-ina1ZgUJgu9P4kN66etZyjErqYw');
 			// $this->chrom_length = mt_rand(1,$time-1);
@@ -18,6 +19,7 @@
 			$this->waktu_kunjung = 60;
 			$this->utils = new Utils();
 			$this->digit = $digit;
+			$this->first_obj = $first_obj;
 		}
 		/**
 		 * generateChrom builds the chromosomes
@@ -34,10 +36,16 @@
 			$chrom_binary = array_merge($chrom_binary,$time, $origin_binary);
 			array_push($chrom_int, $this->id_origin);
 			// $last_index_objek = sizeof($this->objek_wisata)-1;
-			for ($i=0; $i < $this->chrom_length; $i++) { 
+			for ($i=0; $i < $this->chrom_length; $i++) {
 				// $index_randomized_city = mt_rand(0,$last_index_objek);
-				$index_randomized_city 	= array_rand($this->objek_wisata);
-				$randomized_city 		= $this->checkIfSame($chrom_int,$this->objek_wisata[$index_randomized_city],$this->objek_wisata);
+				if ($i === 0 && $this->first_obj !== null) {
+					$chosen_destination = $this->first_obj;
+				}
+				else {
+					$index_randomized_city 	= array_rand($this->objek_wisata);
+					$chosen_destination = $this->objek_wisata[$index_randomized_city];
+				}
+				$randomized_city 		= $this->checkIfSame($chrom_int,$chosen_destination,$this->objek_wisata);
 				array_push($chrom_int, $randomized_city);
 				$chrom_binary = array_merge($chrom_binary, $this->utils->dectobin($randomized_city, $this->digit));
 			}
@@ -63,7 +71,7 @@
 		}
 		public function generateChromDetails()
 		{
-			
+
 		}
 		public function generateFitnessFunction($cities)
 		{
@@ -108,7 +116,7 @@
 		}
 		/**
 		 * Convert integer to array contains binary strings (4 digits)
-		 * @param  int $dec 
+		 * @param  int $dec
 		 * @return array      arr_bin
 		 */
 		public function dectobin($dec)
@@ -125,19 +133,19 @@
 		}
 
 	}
-	
+
 
 	// $time = 4;
 	// $cities_amount = 2;
 	// $start = microtime(true);
 	// $cities = [1,2,3,4,6,7,8,10,11];
 	// $kromosom = new Individu($time,$cities_amount,$cities);
-	// echo "<pre>"; 
-	// for ($i=0; $i < 50; $i++) { 
+	// echo "<pre>";
+	// for ($i=0; $i < 50; $i++) {
 	// 	echo "Ke -".$i."<br>";
-	// 	print_r($kromosom->generateChrom()); 
+	// 	print_r($kromosom->generateChrom());
 	// }
-	// // print_r($kromosom->generateChrom()); 
+	// // print_r($kromosom->generateChrom());
 	// echo "</pre>";
 	// $time_elapsed_secs = microtime(true) - $start;
 	// echo "<br>Exec Time ".$time_elapsed_secs;

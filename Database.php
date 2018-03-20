@@ -14,7 +14,8 @@ class Database{
 		$query = $this->db->query($sql);
 		return $query;
 	}
-	public function selectObjekBaliSelatan()
+	// AREA A : Radius <= 65 km dari ngurah rai
+	public function selectObjekWisataAreaA()
 	{
 		$utils = new Utils();
 		$sql = "SELECT dest_id FROM dest WHERE dest_area = 'A'";
@@ -23,7 +24,8 @@ class Database{
 		// return $res;
 		return $utils->array_flatten($res);
 	}
-	public function selectObjekBaliUtara()
+	// AREA B : Radius <= dan > 65 km dari ngurah rai
+	public function selectObjekWisataAll()
 	{
 		$utils = new Utils();
 		$sql = "SELECT dest_id FROM dest";
@@ -32,6 +34,18 @@ class Database{
 		// return $res;
 		return $utils->array_flatten($res);
 	}
-}
 
+	public function findNearestLocation($lat, $lng)
+	{
+		$utils = new Utils();
+		$sql = "SELECT *, MIN( 6371 * acos( cos( radians(" . $lat . ") ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(" . $lng . ") ) + sin( radians(" . $lat . ") ) * sin( radians( lat ) ) ) ) AS distance FROM dest WHERE dest_id != 1 HAVING distance < 15 ";
+		$query = $this->db->query($sql);
+		$res = $query->fetchAll(\PDO::FETCH_ASSOC);
+		return $utils->array_flatten($res);
+	}
+}
+$db = new Database();
+// $lat = '-8.816568';
+// $lng = '115.092211';
+// var_dump($db->findNearestLocation($lat, $lng));
 ?>

@@ -3,15 +3,24 @@
 	require_once 'Database.php';
 	require_once 'Utils.php';
 	/**
-	* 
+	*
 	*/
-// TODO : Buat supaya array binarynya bisa fleksibel
+// DONE : Buat supaya array binarynya bisa fleksibel
 // DONE : Verifikasi jaraknya masuk akal ga
+// DONE: Bikin supaya dia bisa terima originnya
 	class Generasi
 	{
 		function __construct($pops, $time, $cities_visited)
 		{
-			define('MUTATION_RATE', 0.04);
+			$this->database = new Database();
+			$this->first_obj = null;
+			if (isset($_GET['lang']) && isset($_GET['lat'])) {
+				$lang = $_GET['lang'];
+				$lat = $_GET['lat'];
+				$this->first_obj = $this->database->findNearestLocation($lat, $lang)['dest_id'];
+				// var_dump($this->first_obj);
+			}
+			define('MUTATION_RATE', 0.1);
 			define('CROSSOVER_RATE', 0.5);
 			// Belum termasuk jam
 			$this->digit = 4;
@@ -21,8 +30,7 @@
 			$this->cities_visited = $cities_visited;
 			$this->time = $time;
 			$this->velocity = 40;
-			
-			$this->database = new Database();
+
 			// TODO: Benerin ini biar objek wisatanya pake radius
 			if ($this->time <= 6) {
 				$this->objek_wisata = $this->database->selectObjekWisataAreaA();
@@ -35,10 +43,8 @@
 		public function runGAAll($counter)
 		{
 			$first_pop = '';
-			for ($i=1; $i <= $counter; $i++) { 
+			for ($i=1; $i <= $counter; $i++) {
 				try {
-					echo "Generasi ke- $i<br>"
-					."****************************************************************************<br>";
 					$first_pop = $this->runGA($first_pop);
 				}
 				catch (Exception $e) {
@@ -63,18 +69,18 @@
 					$i+=$this->digit;
 				}
 				$json_final = [];
-				array_push($json_final, 
+				array_push($json_final,
 					["availability_time" => $this->time], ["destinasi" =>  $chrom_int], ["total_travel_minutes" => 1/end($first_pop) ]);
 				echo json_encode($json_final);
 			}
-			
+
 		}
-		
+
 		public function runGA($first_pop)
 		{
 			// // Inisiasi Kromosom
 			$utils = new Utils();
-			
+
 			try {
 				$population = $this->generatePops($first_pop);
 				// include 'population_test.php';
@@ -82,27 +88,27 @@
 				foreach ($population as $line) {
 					array_push($fitness_collection, end($line));
 				}
-				
+
 				// Print out current pops
 				// echo $this->my_print_r2($population);
-				echo "Populasi Sudah Diinisialisasi <br>=====================================<br><br>";
+				// echo "Populasi Sudah Diinisialisasi <br>=====================================<br><br>";
 				// var_dump($fitness_collection);
 				// echo $this->my_print_r2($population);
-				
+
 				// ###################################################################
 				// Crossover
-				echo "Crossover<br>=====================================<br><br>";
+				// echo "Crossover<br>=====================================<br><br>";
 				$population = $this->crossover($population);
 				// echo $this->my_print_r2($population);
 
 				// ###################################################################
 				// Mutasi
-				echo "Mutation<br>=================================<br><br>";
+				// echo "Mutation<br>=================================<br><br>";
 				$population = $this->mutation($population);
 				// echo $this->my_print_r2($population);
 
 				// Seleksi Alam
-				echo "Seleksi Alam dan yang terpilih jeng jeng<br>=================================<br><br>";
+				// echo "Seleksi Alam dan yang terpilih jeng jeng<br>=================================<br><br>";
 				$selected_pops = $population[$this->selection($population)];
 				return $selected_pops;
 				// echo $this->my_print_r2($selected_pops);
@@ -120,7 +126,7 @@
 				// $b = sizeof($arr_sel_pop);
 				// $chrom_int = [];
 				// $i = 0;
-				// // for ($i=0; $i < $b; $i+4) { 
+				// // for ($i=0; $i < $b; $i+4) {
 				// // 	$binary_array = array_slice($first_pop, $i, 4);
 				// // 	$dec = $this->utils->bintodec($binary_array);
 				// // 	array_push($chrom_int, $dec);
@@ -141,13 +147,13 @@
 				throw new Exception('Tidak ditemukan solusi');
 				// echo 'Caught exception: ',  $e->getMessage(), "\n";
 			}
-			
+
 		}
 
 		function generatePops($first_pop)
 		{
 			$database = new Database();
-			$kromosom = new Individu($this->time,$this->cities_visited,$this->objek_wisata, $this->digit);
+			$kromosom = new Individu($this->time,$this->cities_visited,$this->objek_wisata, $this->digit, $this->first_obj);
 			$population = [];
 			if ($first_pop!== '') {
 				$population[0] = $first_pop;
@@ -175,7 +181,7 @@
 			$available_to_xo = CROSSOVER_RATE*$this->population;
 			// DEBUG
 			// echo "Jumlah Kromosom yang di XOR :".$available_to_xo."<br><br>";
-			for ($i=0; $i < $available_to_xo; $i+=2) { 
+			for ($i=0; $i < $available_to_xo; $i+=2) {
 				// $rand_index_1 = mt_rand(1,($this->population-1));
 				$rand_index_1 = $this->selection($population);
 				$rand_index_2 = $this->selection($population);
@@ -198,7 +204,7 @@
 			$end = $length_chrom1 - $this->digit - 2;
 			$r1 = mt_rand(BATAS_AWAL,$end);
 			$r2 = mt_rand(BATAS_AWAL,$end);
-			
+
 			while ($r1 == $r2 ) {
 				$r2 = mt_rand(BATAS_AWAL,$end);
 			}
@@ -212,7 +218,7 @@
 			$chrom1_slice = array_slice($chrom_parent1,$r1,$length_selected);
 			$chrom2_slice = array_slice($chrom_parent2,$r1,$length_selected);
 			// echo "r1 = $r1 r2 = $r2 | Chrom Slice 1:".$this->my_print_r2($chrom1_slice)."<br> Chrom Slice 2:".$this->my_print_r2($chrom2_slice)."<br>";
-			// DONE 2: replace chrom1 slice ke chrom2 slice dan sebaliknya. 
+			// DONE 2: replace chrom1 slice ke chrom2 slice dan sebaliknya.
 			$index_slice = 0;
 			$i = $r1;
 			$lengthplusone = $length_selected + 1;
@@ -246,7 +252,7 @@
 		function mutation($population)
 		{
 			$available_to_mutate = MUTATION_RATE*$this->population;
-			for ($i=0; $i < $available_to_mutate; $i++) { 
+			for ($i=0; $i < $available_to_mutate; $i++) {
 				// DEBUG
 				// $random_pops_index = array_rand($population);
 				// echo "Populasi ke-$random_pops_index before : <br>";
@@ -265,11 +271,11 @@
 					// var_dump($verifikasi);
 					$pops_mutated = $this->generateNewFitness($verifikasi);
 				}
-				
+
 				// Timpa populasi lama dengan yang dimutasi
 				$population[$random_pops_index] = $pops_mutated;
 			}
-			
+
 			return $population;
 		}
 		function selection(&$population)
@@ -283,8 +289,8 @@
 		}
 
 		/* GA Operators */
-		
-		
+
+
 		function mutationSwap($chrom)
 		{
 			$length = sizeof($chrom);
@@ -330,8 +336,8 @@
 				$i++;
 			}
 		}
-	
-		
+
+
 //====================== UTILS =============================\\
 		function generateNewFitness($chromosom)
 		{
@@ -408,7 +414,7 @@
 				$i+=$this->digit;
 			}
 			$new_chromosom = $chromosom;
-			
+
 			// kota pertama digit 5 : ganti dari 10-14 $failed_index = 0
 			// kota kedua digit 4: ganti dari 12-15 1
 			// 5(digit)*(2+0 (failed index))
@@ -417,7 +423,7 @@
 			if (isset($failed_index)) {
 				// echo "Ditemukan failed binary pada destinasi ke-($failed_index), melakukan penggantian sparepart<br>------------------";
 				// // kalo tanpa jam
-				// // BARU SAMPE SINI 
+				// // BARU SAMPE SINI
 				$failed_index = $this->digit*($failed_index+2);
 				$failed_index_end = $failed_index+$this->digit;
 				// echo "1) Generate destinasi baru<br>";
@@ -488,22 +494,18 @@
 			}
 		}
 	}
-	$berapa_populasi = 50;
+	$berapa_populasi = 3;
 	$waktu = 10;
-	$yang_mau_dikunjungi = 3;
+	$yang_mau_dikunjungi = 2;
 	$generasi = new Generasi($berapa_populasi,$waktu,$yang_mau_dikunjungi);
-	$start = microtime(true);
-	$chrom_parent1 = ["0","1","0","1","1","0","0","0","0","1","0","0","1","0","0","0","1","0","0","0","0","0","0","0","1","0.0047996160"];
-	$chrom_parent2 = ["0","1","0","1","1","0","0","0","0","1","0","0","1","1","1","0","0","0","1","0","0","0","0","0","1","0.0050851767"];
-
-	echo "<pre>"; 
-	// maks cuma bisa 15, kalo >15 ga kuat komp nya
-	print_r($generasi->runGAAll(50));
-	// include 'population_test.php';
-	// print_r($generasi->crossover($population));
-	// print_r($generasi->mutation(["1","1","0","0","0","0","0","1","0","0","1","1","0","1","1","1","1","0","0","0","1","0","1","0","0","0","0","1","0.0034596091"]));
-	echo "</pre>";
-	$time_elapsed_secs = microtime(true) - $start;
-	echo "<br>Exec Time ".$time_elapsed_secs;
+	// $start = microtime(true);
+	// $chrom_parent1 = ["0","1","0","1","1","0","0","0","0","1","0","0","1","0","0","0","1","0","0","0","0","0","0","0","1","0.0047996160"];
+	// $chrom_parent2 = ["0","1","0","1","1","0","0","0","0","1","0","0","1","1","1","0","0","0","1","0","0","0","0","0","1","0.0050851767"];
+	$generasi->runGAAll(50);
+	// echo "<pre>";
+	// print_r($generasi->runGAAll(50));
+	// echo "</pre>";
+	// $time_elapsed_secs = microtime(true) - $start;
+	// echo "<br>Exec Time ".$time_elapsed_secs;
 	// DONE : VERIFIKASI SETELAH MUTASI DAN CROSSOVER
 ?>
